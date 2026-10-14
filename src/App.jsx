@@ -1,41 +1,40 @@
-import { useState, useEffect } from "react"
-import ThemeToggle from "./components/ThemeToggle"
-import Input from "./components/Input"
-import OperationGrid from "./components/OperationGrid"
-
-
-
+import { useState, useEffect } from "react";
+import ThemeToggle from "./components/ThemeToggle";
+import Input from "./components/Input";
+import OperationGrid from "./components/OperationGrid";
 
 export default function App() {
-  const [theme, setTheme] = useState(0)
+  const [theme, setTheme] = useState(0);
   const [display, setDisplay] = useState("0");
   const [number1, setNumber1] = useState(null);
   const [operator, setOperator] = useState(null);
   const [justCalculated, setJustCalculated] = useState(false);
+  const [pendingOperation, setPendingOperation] = useState(false); // true if there is an operation pending, false if not
 
   function formatNumber(value) {
     if (value === "Error") return value;
-  
+
     const [integer, decimal] = value.split(".");
     const formattedInt = Number(integer).toLocaleString("en-GB");
-  
-    return decimal !== undefined
-      ? `${formattedInt}.${decimal}`
-      : formattedInt;
+
+    return decimal !== undefined ? `${formattedInt}.${decimal}` : formattedInt;
   }
 
-
   function handleNumber(number) {
-
     if (justCalculated) {
       setDisplay(number === "." ? "0." : number);
       setJustCalculated(false);
       setNumber1(null);
       setOperator(null);
+      setPendingOperation(false);
+      return;
+    }
+    if (pendingOperation) {
+      setDisplay(number === "." ? "0." : number);
+      setPendingOperation(false);
       return;
     }
     if (number === "." && display.includes(".")) return;
-
 
     if (display === "0" && number !== ".") {
       setDisplay(number);
@@ -49,18 +48,15 @@ export default function App() {
 
     if (number1 === null) {
       setNumber1(currentNumber);
-      setOperator(op);
-      setDisplay("0");
 
-} else if (operator && !justCalculated) {
-  const result = calculateResult(number1, currentNumber, operator);
-  setNumber1(result);
-      setOperator(op);
       setDisplay("0");
-} else {
-  setOperator(op)
-}
-setJustCalculated(false)
+    } else if (operator && !justCalculated && !pendingOperation) {
+      const result = calculateResult(number1, currentNumber, operator);
+      setNumber1(result);
+    }
+    setJustCalculated(false);
+    setPendingOperation(true);
+    setOperator(op);
   }
 
   function handleEquals() {
@@ -73,13 +69,12 @@ setJustCalculated(false)
       setJustCalculated(true);
     }
   }
-  
 
   function handleReset() {
     setDisplay("0");
     setNumber1(null);
     setOperator(null);
-    setJustCalculated(false)
+    setJustCalculated(false);
   }
 
   function handleDelete() {
@@ -91,43 +86,40 @@ setJustCalculated(false)
     setDisplay(display.length > 1 ? display.slice(0, -1) : "0");
   }
 
-  
   function calculateResult(num1, num2, op) {
     switch (op) {
       case "+":
         return num1 + num2;
-        case "-":
-          return num1 - num2;
-          case "*":
-            return num1 * num2;
-            case "/":
-              return num2 !== 0 ? num1 / num2 : "Error";
-              default:
-                return num2
-
+      case "-":
+        return num1 - num2;
+      case "*":
+        return num1 * num2;
+      case "/":
+        return num2 !== 0 ? num1 / num2 : "Error";
+      default:
+        return num2;
     }
   }
-  
-  
-  
-  
-  
+
   useEffect(() => {
     document.body.className = `theme-${theme}`;
   }, [theme]);
-  
-  
+
   return (
     <div className={`app theme-${theme}`}>
-      
       <ThemeToggle theme={theme} setTheme={setTheme} />
-<Input display={display} setDisplay={setDisplay} formatNumber={formatNumber} />
-<OperationGrid onReset={handleReset} 
-onDelete={handleDelete} 
-onNumber={handleNumber} 
-onOperator={handleOperator} 
-onEquals={handleEquals}/>
+      <Input
+        display={display}
+        setDisplay={setDisplay}
+        formatNumber={formatNumber}
+      />
+      <OperationGrid
+        onReset={handleReset}
+        onDelete={handleDelete}
+        onNumber={handleNumber}
+        onOperator={handleOperator}
+        onEquals={handleEquals}
+      />
     </div>
-  )
+  );
 }
-
