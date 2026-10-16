@@ -1,10 +1,5 @@
-function Input({display, formatNumber}) {
-    return (
-        <div className="display">
-           {formatNumber(display)} 
-            
-        </div>
-    )
+function Input({ display }) {
+  return <div className="display">{display}</div>;
 }
 
-export default Input
+export default Input;

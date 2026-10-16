@@ -20,7 +20,15 @@ export default function App() {
     return decimal !== undefined ? `${formattedInt}.${decimal}` : formattedInt;
   }
 
+  const formattedDisplay = formatNumber(display);
+
   function handleNumber(number) {
+    if (display === "Error") {
+      setDisplay(number === "." ? "0." : number);
+
+      return;
+    }
+
     if (justCalculated) {
       setDisplay(number === "." ? "0." : number);
       setJustCalculated(false);
@@ -44,7 +52,8 @@ export default function App() {
   }
 
   function handleOperator(op) {
-    const currentNumber = parseFloat(display.replace(/,/g, ""));
+    if (display === "Error") return;
+    const currentNumber = parseFloat(display);
 
     if (number1 === null) {
       setNumber1(currentNumber);
@@ -52,6 +61,15 @@ export default function App() {
       setDisplay("0");
     } else if (operator && !justCalculated && !pendingOperation) {
       const result = calculateResult(number1, currentNumber, operator);
+
+      if (result === "Error") {
+        setDisplay("Error");
+        setNumber1(null);
+        setOperator(null);
+        setJustCalculated(false);
+        setPendingOperation(false);
+        return;
+      }
       setNumber1(result);
     }
     setJustCalculated(false);
@@ -63,10 +81,21 @@ export default function App() {
     if (number1 !== null && operator) {
       const currentNumber = parseFloat(display);
       const result = calculateResult(number1, currentNumber, operator);
+
+      if (result === "Error") {
+        setDisplay("Error");
+        setNumber1(null);
+        setOperator(null);
+        setJustCalculated(false);
+        setPendingOperation(false);
+        return;
+      }
+
       setDisplay(result.toString());
       setNumber1(result);
       setOperator(null);
       setJustCalculated(true);
+      setPendingOperation(false);
     }
   }
 
@@ -75,14 +104,13 @@ export default function App() {
     setNumber1(null);
     setOperator(null);
     setJustCalculated(false);
+    setPendingOperation(false);
   }
 
   function handleDelete() {
-    if (justCalculated) {
-      setDisplay("0");
-      setJustCalculated(false);
-      return;
-    }
+    if (pendingOperation) return;
+    if (justCalculated) return;
+
     setDisplay(display.length > 1 ? display.slice(0, -1) : "0");
   }
 
@@ -108,11 +136,7 @@ export default function App() {
   return (
     <div className={`app theme-${theme}`}>
       <ThemeToggle theme={theme} setTheme={setTheme} />
-      <Input
-        display={display}
-        setDisplay={setDisplay}
-        formatNumber={formatNumber}
-      />
+      <Input display={formattedDisplay} />
       <OperationGrid
         onReset={handleReset}
         onDelete={handleDelete}
